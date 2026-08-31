@@ -1,75 +1,135 @@
-# React + TypeScript + Vite
+# Doctor Appointment Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend application for a doctor appointment booking system. It is built with React, TypeScript, Vite, and a custom UI layer based on shadcn-inspired components and Tailwind styling.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The frontend allows users to:
 
-## React Compiler
+- sign up and log in
+- access protected patient routes
+- view available specialties
+- select a date and time slot
+- book an appointment
+- delete an appointment 
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The application communicates with the backend REST API on port 3001 and uses JWT-based authentication stored in cookies.
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19
+- TypeScript
+- Vite
+- React Router DOM
+- Tailwind CSS
+- shadcn/ui pattern components
+- Zod form validation
+- Sonner for notifications
+- js-cookie and JWT decoding for auth state management
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Project Structure
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+src/
+  api/                 # API calls for auth and appointments
+  components/          # Reusable layout and UI components
+  context/             # AuthProvider and auth state logic
+  hooks/               # Custom hooks
+  lib/                 # Shared utility helpers
+  pages/               # Login, signup, home, and patient screens
+  router/              # Route guards
+  schemas/             # Form validation schemas
+  types/               # Shared TS types
+  utils/               # Cookie helpers
+  App.tsx              # App routing setup
+  main.tsx             # Application entry point
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Prerequisites
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Node.js 18+ recommended
+- npm or pnpm
+- The backend API must be running on port 3001
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Environment
 
+Create a local environment file if needed:
+
+```bash
+cp .env.example .env
 ```
+
+Example:
+
+```env
+VITE_API_URL=http://localhost:3001
+```
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the app:
+
+```bash
+npm run dev
+```
+
+The development server starts in Vite and usually runs at:
+
+```text
+http://localhost:5173
+```
+
+## Production Build
+
+Build the frontend:
+
+```bash
+npm run build
+```
+
+This generates a production bundle in the `dist` folder.
+
+Preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## Available Scripts
+
+```bash
+npm run dev      # Start the Vite dev server
+npm run build    # Type-check and build for production
+npm run lint     # Run ESLint checks
+npm run preview  # Preview the production build
+```
+
+## Authentication Flow
+
+The app stores the JWT in a cookie named `access_token` and exposes auth state via `AuthProvider`.
+
+- login requests are sent to `/auth/login`
+- signup requests are sent to `/auth/signup`
+- protected pages are gated through route wrappers
+- the token is decoded to read the current username and to determine auth status
+
+## Route Overview
+
+- `/` → home page
+- `/auth/login` → login screen
+- `/auth/signup` → registration screen
+- `/users/specialties` → specialty selection for patients
+- `/users/appointments` → appointment booking page
+
+## Notes
+
+This frontend is designed to work with the backend API exposed by the doctor appointment service. The backend handles user creation, JWT authentication, appointment validation, and MongoDB persistence.
+
+For full app behavior, run both repositories together: the frontend for the browser experience and the backend for API and database services.
+
