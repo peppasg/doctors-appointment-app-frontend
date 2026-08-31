@@ -5,7 +5,8 @@ import { Toaster } from "sonner";
 
 const RouterLayout = () => {
   return (
-    <div>
+    <>
+      <div>
       <Header />
       <main className="container mx-auto min-h-[95vh] pt-36">
         <Outlet />
@@ -13,6 +14,7 @@ const RouterLayout = () => {
       <Footer />
       <Toaster />
     </div>
+    </>
   );
 };
 
