@@ -7,7 +7,7 @@ const HomePage = () => {
   const { isAuthenticated } = useAuth()
 
   const handleBookAppointment = () => {
-    navigate(isAuthenticated ? "/user/specialties" : "/auth/login")
+    navigate(isAuthenticated ? "/users/specialties" : "/auth/login")
   }
 
   return (

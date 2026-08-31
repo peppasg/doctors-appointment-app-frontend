@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
@@ -29,9 +29,24 @@ const formatLocalDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+const parseAppointmentDateTime = (date: string, slot: string) => {
+  const [hours, minutes] = slot.split(":").map(Number);
+
+  if (!date || Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return null;
+  }
+
+  return new Date(`${date}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`);
+};
+
+const isPastAppointment = (date: string, slot: string) => {
+  const appointmentDate = parseAppointmentDateTime(date, slot);
+  return appointmentDate ? appointmentDate.getTime() < Date.now() : false;
+};
+
 const AppointmentBookingPage = () => {
   const [searchParams] = useSearchParams();
-  const specialty = searchParams.get("specialty") ?? "General Medicine";
+  const specialty = searchParams.get("specialty") ?? "Pathology";
   const { accessToken } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -76,7 +91,29 @@ const AppointmentBookingPage = () => {
     loadSlots();
   }, [selectedDate, accessToken]);
 
-  const myAppointments = appointments;
+  const myAppointments = useMemo(
+    () =>
+      [...appointments].sort((a, b) => {
+        const aDate = parseAppointmentDateTime(a.date, a.slot);
+        const bDate = parseAppointmentDateTime(b.date, b.slot);
+
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+
+        return bDate.getTime() - aDate.getTime();
+      }),
+    [appointments]
+  );
+
+  const selectedDateKey = selectedDate ? formatLocalDate(selectedDate) : null;
+  const hasSameSpecialtySameDay =
+    selectedDateKey !== null &&
+    appointments.some(
+      (appointment) =>
+        appointment.date === selectedDateKey &&
+        appointment.specialty.toLowerCase() === specialty.toLowerCase()
+    );
 
   const handleBook = async () => {
     if (!selectedDate || !slotChoice || !accessToken) {
@@ -126,21 +163,34 @@ const AppointmentBookingPage = () => {
       />
 
       {selectedDate && (
-        <div className="flex gap-2 items-center">
-          <select
-            value={slotChoice}
-            onChange={(e) => setSlotChoice(e.target.value)}
-            className="border rounded p-2"
-          >
-            <option value="">Choose slot</option>
-            {slots.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col gap-3">
+          {hasSameSpecialtySameDay ? (
+            <p className="text-sm text-red-600">
+              You already have an appointment in this specialty for this day.
+            </p>
+          ) : (
+            <div className="flex gap-2 items-center">
+              <select
+                value={slotChoice}
+                onChange={(e) => setSlotChoice(e.target.value)}
+                className="border rounded p-2"
+              >
+                <option value="">Choose slot</option>
+                {slots.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
 
-          <Button onClick={handleBook}>Book an appointment</Button>
+              <Button
+                onClick={handleBook}
+                disabled={hasSameSpecialtySameDay}
+              >
+                Book an appointment
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -151,32 +201,36 @@ const AppointmentBookingPage = () => {
           <p className="text-gray-600">You have no appointments yet.</p>
         ) : (
           <ul className="space-y-2">
-            {myAppointments.map((a) => (
-              <li
-                key={a.id}
-                className="flex justify-between items-center border rounded p-2"
-              >
-                <span>
-                  {a.date} — {a.slot} ({a.specialty})
-                </span>
+            {myAppointments.map((a) => {
+              const past = isPastAppointment(a.date, a.slot);
 
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    setEditingAppointment(a);
-                    deleteDialog.openDialog();
-                  }}
+              return (
+                <li
+                  key={a.id}
+                  className="flex justify-between items-center border rounded p-2"
                 >
-                  Delete
-                </Button>
-              </li>
-            ))}
+                  <span className={past ? "line-through text-gray-500" : ""}>
+                    {a.date} — {a.slot} ({a.specialty})
+                  </span>
+
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setEditingAppointment(a);
+                      deleteDialog.openDialog();
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
       <div className="pt-2 text-center">
-        <Link to="/user/specialties">
+        <Link to="/users/specialties">
           <Button variant="outline">Choose another specialty</Button>
         </Link>
       </div>

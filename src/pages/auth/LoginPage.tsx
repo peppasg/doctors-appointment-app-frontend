@@ -25,7 +25,7 @@ const LoginPage = () => {
       toast.success(`Welcome ${data.username}`);
 
       if (res.role) {
-        navigate("/user/specialties");
+        navigate("/users/specialties");
       }
     } catch {
       toast.error("Invalid credentials");
